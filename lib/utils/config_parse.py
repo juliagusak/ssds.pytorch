@@ -161,13 +161,15 @@ __C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE
 # Dataset options
 # ---------------------------------------------------------------------------- #
 # Root directory of project
-__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
+# __C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
+
 
 __C.DATASET = AttrDict()
 # name of the dataset
 __C.DATASET.DATASET = 'voc'
 # path of the dataset
-__C.DATASET.DATASET_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
+# __C.DATASET.DATASET_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
+__C.DATASET.DATASET_DIR = "/workspace/raid/data/datasets/voc/"
 # train set scope
 __C.DATASET.TRAIN_SETS = [('2007', 'trainval'), ('2012', 'trainval')]
 # test set scope
@@ -190,7 +192,8 @@ __C.DATASET.NUM_WORKERS = 8
 # Export options
 # ---------------------------------------------------------------------------- #
 # Place outputs model under an experiments directory
-__C.EXP_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'experiments/models/'))
+# __C.EXP_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'experiments/models/'))
+__C.EXP_DIR = "/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/"
 __C.LOG_DIR = __C.EXP_DIR
 __C.RESUME_CHECKPOINT = ''
 __C.CHECKPOINTS_PREFIX = '{}_{}_{}'.format(__C.MODEL.SSDS, __C.MODEL.NETS, __C.DATASET.DATASET)

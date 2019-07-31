@@ -25,6 +25,8 @@ from lib.utils.config_parse import cfg
 from lib.utils.eval_utils import *
 from lib.utils.visualize_utils import *
 
+import copy 
+
 class Solver(object):
     """
     A wrapper class for the training process
@@ -42,8 +44,12 @@ class Solver(object):
         # Build model
         print('===> Building model')
         self.model, self.priorbox = create_model(cfg.MODEL)
-        self.priors = Variable(self.priorbox.forward(), volatile=True)
-        self.detector = Detect(cfg.POST_PROCESS, self.priors)
+        with torch.no_grad():
+            self.priors = Variable(self.priorbox.forward())
+            self.detector = Detect(cfg.POST_PROCESS, self.priors)
+            
+#         self.priors = Variable(self.priorbox.forward(), volatile=True)
+#         self.detector = Detect(cfg.POST_PROCESS, self.priors)
 
         # Utilize GPUs for computation
         self.use_gpu = torch.cuda.is_available()
@@ -102,13 +108,13 @@ class Solver(object):
         print(("=> loading checkpoint '{:s}'".format(resume_checkpoint)))
         checkpoint = torch.load(resume_checkpoint)
 
-        # print("=> Weigths in the checkpoints:")
-        # print([k for k, v in list(checkpoint.items())])
+        print("=> Weigths in the checkpoints:")
+        print([k for k, v in list(checkpoint.items())])
 
         # remove the module in the parrallel model
         if 'module.' in list(checkpoint.items())[0][0]:
             pretrained_dict = {'.'.join(k.split('.')[1:]): v for k, v in list(checkpoint.items())}
-            checkpoint = pretrained_dict
+            checkpoint = copy.deepcopy(pretrained_dict)
 
         # change the name of the weights which exists in other model
         # change_dict = {
@@ -141,7 +147,7 @@ class Solver(object):
                     if resume_key in k:
                         pretrained_dict[k] = v
                         break
-            checkpoint = pretrained_dict
+            checkpoint = copy.deepcopy(pretrained_dict)
 
         pretrained_dict = {k: v for k, v in checkpoint.items() if k in self.model.state_dict()}
         # print("=> Resume weigths:")
@@ -228,6 +234,9 @@ class Solver(object):
             sys.stdout.write('\rEpoch {epoch:d}/{max_epochs:d}:\n'.format(epoch=epoch, max_epochs=self.max_epochs))
             if epoch > warm_up:
                 self.exp_lr_scheduler.step(epoch-warm_up)
+                
+            print('Phase', cfg.PHASE)
+            
             if 'train' in cfg.PHASE:
                 self.train_epoch(self.model, self.train_loader, self.optimizer, self.criterion, self.writer, epoch, self.use_gpu)
             if 'eval' in cfg.PHASE:
@@ -256,6 +265,9 @@ class Solver(object):
         else:
             sys.stdout.write('\rCheckpoint {}:\n'.format(self.checkpoint))
             self.resume_checkpoint(self.checkpoint)
+            
+            print('Phase', cfg.PHASE)
+            
             if 'eval' in cfg.PHASE:
                 self.eval_epoch(self.model, self.eval_loader, self.detector, self.criterion, self.writer, 0, self.use_gpu)
             if 'test' in cfg.PHASE:
@@ -278,10 +290,13 @@ class Solver(object):
             images, targets = next(batch_iterator)
             if use_gpu:
                 images = Variable(images.cuda())
-                targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
+                targets = [Variable(anno.cuda()) for anno in targets]
+#                 targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
             else:
                 images = Variable(images)
-                targets = [Variable(anno, volatile=True) for anno in targets]
+                targets = [Variable(anno) for anno in targets]
+#                 targets = [Variable(anno, volatile=True) for anno in targets]
+               
             _t.tic()
             # forward
             out = model(images, phase='train')
@@ -341,61 +356,65 @@ class Solver(object):
         size = [list() for _ in range(model.num_classes)]
         npos = [0] * model.num_classes
 
-        for iteration in iter(range((epoch_size))):
-        # for iteration in iter(range((10))):
-            images, targets = next(batch_iterator)
-            if use_gpu:
-                images = Variable(images.cuda())
-                targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
-            else:
-                images = Variable(images)
-                targets = [Variable(anno, volatile=True) for anno in targets]
+        with torch.no_grad():
+            for iteration in iter(range((epoch_size))):
+            # for iteration in iter(range((10))):
+                images, targets = next(batch_iterator)
+                if use_gpu:
+                    images = Variable(images.cuda())
+                    targets = [Variable(anno.cuda()) for anno in targets]
+    #                 targets = [Variable(anno.cuda(), volatile=True) for anno in targets]
 
-            _t.tic()
-            # forward
-            out = model(images, phase='train')
+                else:
+                    images = Variable(images)
+                    targets = [Variable(anno) for anno in targets]
+    #                 targets = [Variable(anno, volatile=True) for anno in targets]
 
-            # loss
-            loss_l, loss_c = criterion(out, targets)
+                _t.tic()
+                # forward
+                out = model(images, phase='train')
 
-            out = (out[0], model.softmax(out[1].view(-1, model.num_classes)))
+                # loss
+                loss_l, loss_c = criterion(out, targets)
 
-            # detect
-            detections = detector.forward(out)
+                out = (out[0], model.softmax(out[1].view(-1, model.num_classes)))
 
-            time = _t.toc()
+                # detect
+                detections = detector.forward(out)
 
-            # evals
-            label, score, npos, gt_label = cal_tp_fp(detections, targets, label, score, npos, gt_label)
-            size = cal_size(detections, targets, size)
-            loc_loss += loss_l.data[0]
-            conf_loss += loss_c.data[0]
+                time = _t.toc()
 
-            # log per iter
-            log = '\r==>Eval: || {iters:d}/{epoch_size:d} in {time:.3f}s [{prograss}] || loc_loss: {loc_loss:.4f} cls_loss: {cls_loss:.4f}\r'.format(
-                    prograss='#'*int(round(10*iteration/epoch_size)) + '-'*int(round(10*(1-iteration/epoch_size))), iters=iteration, epoch_size=epoch_size,
-                    time=time, loc_loss=loss_l.data[0], cls_loss=loss_c.data[0])
+                # evals
+                label, score, npos, gt_label = cal_tp_fp(detections, targets, label, score, npos, gt_label)
+                size = cal_size(detections, targets, size)
+                loc_loss += loss_l.data[0]
+                conf_loss += loss_c.data[0]
 
+                # log per iter
+                log = '\r==>Eval: || {iters:d}/{epoch_size:d} in {time:.3f}s [{prograss}] || loc_loss: {loc_loss:.4f} cls_loss: {cls_loss:.4f}\r'.format(
+                        prograss='#'*int(round(10*iteration/epoch_size)) + '-'*int(round(10*(1-iteration/epoch_size))), iters=iteration, epoch_size=epoch_size,
+                        time=time, loc_loss=loss_l.data[0], cls_loss=loss_c.data[0])
+
+                sys.stdout.write(log)
+                sys.stdout.flush()
+
+            # eval mAP
+            prec, rec, ap = cal_pr(label, score, npos)
+
+            # log per epoch
+            sys.stdout.write('\r')
+            sys.stdout.flush()
+            log = '\r==>Eval: || Total_time: {time:.3f}s || loc_loss: {loc_loss:.4f} conf_loss: {conf_loss:.4f} || mAP: {mAP:.6f}\n'.format(mAP=ap,
+                    time=_t.total_time, loc_loss=loc_loss/epoch_size, conf_loss=conf_loss/epoch_size)
             sys.stdout.write(log)
             sys.stdout.flush()
 
-        # eval mAP
-        prec, rec, ap = cal_pr(label, score, npos)
-
-        # log per epoch
-        sys.stdout.write('\r')
-        sys.stdout.flush()
-        log = '\r==>Eval: || Total_time: {time:.3f}s || loc_loss: {loc_loss:.4f} conf_loss: {conf_loss:.4f} || mAP: {mAP:.6f}\n'.format(mAP=ap,
-                time=_t.total_time, loc_loss=loc_loss/epoch_size, conf_loss=conf_loss/epoch_size)
-        sys.stdout.write(log)
-        sys.stdout.flush()
-
-        # log for tensorboard
-        writer.add_scalar('Eval/loc_loss', loc_loss/epoch_size, epoch)
-        writer.add_scalar('Eval/conf_loss', conf_loss/epoch_size, epoch)
-        writer.add_scalar('Eval/mAP', ap, epoch)
-        viz_pr_curve(writer, prec, rec, epoch)
-        viz_archor_strategy(writer, size, gt_label, epoch)
+            # log for tensorboard
+            writer.add_scalar('Eval/loc_loss', loc_loss/epoch_size, epoch)
+            writer.add_scalar('Eval/conf_loss', conf_loss/epoch_size, epoch)
+            writer.add_scalar('Eval/mAP', ap, epoch)
+            viz_pr_curve(writer, prec, rec, epoch)
+            viz_archor_strategy(writer, size, gt_label, epoch)
 
     # TODO: HOW TO MAKE THE DATALOADER WITHOUT SHUFFLE
     # def test_epoch(self, model, data_loader, detector, output_dir, use_gpu):
@@ -472,51 +491,54 @@ class Solver(object):
 
         _t = Timer()
 
-        for i in iter(range((num_images))):
-            img = dataset.pull_image(i)
-            scale = [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
-            if use_gpu:
-                images = Variable(dataset.preproc(img)[0].unsqueeze(0).cuda(), volatile=True)
-            else:
-                images = Variable(dataset.preproc(img)[0].unsqueeze(0), volatile=True)
+        with torch.no_grad():
+            for i in iter(range((num_images))):
+                img = dataset.pull_image(i)
+                scale = [img.shape[1], img.shape[0], img.shape[1], img.shape[0]]
+                if use_gpu:
+    #                 images = Variable(dataset.preproc(img)[0].unsqueeze(0).cuda(), volatile=True)
+                    images = Variable(dataset.preproc(img)[0].unsqueeze(0).cuda())
+                else:
+    #                 images = Variable(dataset.preproc(img)[0].unsqueeze(0), volatile=True)
+                    images = Variable(dataset.preproc(img)[0].unsqueeze(0))
 
-            _t.tic()
-            # forward
-            out = model(images, phase='eval')
+                _t.tic()
+                # forward
+                out = model(images, phase='eval')
 
-            # detect
-            detections = detector.forward(out)
+                # detect
+                detections = detector.forward(out)
 
-            time = _t.toc()
+                time = _t.toc()
 
-            # TODO: make it smart:
-            for j in range(1, num_classes):
-                cls_dets = list()
-                for det in detections[0][j]:
-                    if det[0] > 0:
-                        d = det.cpu().numpy()
-                        score, box = d[0], d[1:]
-                        box *= scale
-                        box = np.append(box, score)
-                        cls_dets.append(box)
-                if len(cls_dets) == 0:
-                    cls_dets = empty_array
-                all_boxes[j][i] = np.array(cls_dets)
+                # TODO: make it smart:
+                for j in range(1, num_classes):
+                    cls_dets = list()
+                    for det in detections[0][j]:
+                        if det[0] > 0:
+                            d = det.cpu().numpy()
+                            score, box = d[0], d[1:]
+                            box *= scale
+                            box = np.append(box, score)
+                            cls_dets.append(box)
+                    if len(cls_dets) == 0:
+                        cls_dets = empty_array
+                    all_boxes[j][i] = np.array(cls_dets)
 
-            # log per iter
-            log = '\r==>Test: || {iters:d}/{epoch_size:d} in {time:.3f}s [{prograss}]\r'.format(
-                    prograss='#'*int(round(10*i/num_images)) + '-'*int(round(10*(1-i/num_images))), iters=i, epoch_size=num_images,
-                    time=time)
-            sys.stdout.write(log)
-            sys.stdout.flush()
+                # log per iter
+                log = '\r==>Test: || {iters:d}/{epoch_size:d} in {time:.3f}s [{prograss}]\r'.format(
+                        prograss='#'*int(round(10*i/num_images)) + '-'*int(round(10*(1-i/num_images))), iters=i, epoch_size=num_images,
+                        time=time)
+                sys.stdout.write(log)
+                sys.stdout.flush()
 
-        # write result to pkl
-        with open(os.path.join(output_dir, 'detections.pkl'), 'wb') as f:
-            pickle.dump(all_boxes, f, pickle.HIGHEST_PROTOCOL)
+            # write result to pkl
+            with open(os.path.join(output_dir, 'detections.pkl'), 'wb') as f:
+                pickle.dump(all_boxes, f, pickle.HIGHEST_PROTOCOL)
 
-        # currently the COCO dataset do not return the mean ap or ap 0.5:0.95 values
-        print('Evaluating detections')
-        data_loader.dataset.evaluate_detections(all_boxes, output_dir)
+            # currently the COCO dataset do not return the mean ap or ap 0.5:0.95 values
+            print('Evaluating detections')
+            data_loader.dataset.evaluate_detections(all_boxes, output_dir)
 
 
     def visualize_epoch(self, model, data_loader, priorbox, writer, epoch, use_gpu):
