@@ -1,11 +1,7 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-
-import os
-
-from lib.layers import *
 
 class FSSD(nn.Module):
     """FSSD: Feature Fusion Single Shot Multibox Detector
@@ -127,7 +123,9 @@ class BasicConv(nn.Module):
         if self.relu is not None:
             x = self.relu(x)
         if up_size is not None:
-            x = F.upsample(x, size=up_size, mode='bilinear')
+            # old version of pytorch (0.3.1) employ umsample
+            #x = F.upsample(x, size=up_size, mode='bilinear')
+            x = F.interpolate(x, size=up_size, mode='bilinear')
             # x = self.up_sample(x)
         return x
 

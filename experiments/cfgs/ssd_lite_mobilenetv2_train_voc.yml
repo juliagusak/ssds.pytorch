@@ -39,12 +39,14 @@ POST_PROCESS:
 
 DATASET:
   DATASET: 'voc'
-  DATASET_DIR: './data/VOCdevkit'
+  DATASET_DIR: '/workspace/raid/data/datasets/voc/VOCdevkit'
   TRAIN_SETS: [['2007', 'trainval'], ['2012', 'trainval']]
   TEST_SETS:  [['2007', 'test']]
   PROB: 0.6
 
-EXP_DIR: './experiments/models/ssd_mobilenet_v2_voc'
-LOG_DIR: './experiments/models/ssd_mobilenet_v2_voc'
-RESUME_CHECKPOINT: './weights/ssd_lite/mobilenet_v2_ssd_lite_voc_73.2.pth'
+
+EXP_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_mobilenet_v2_voc'
+LOG_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_mobilenet_v2_voc'
+
+RESUME_CHECKPOINT: '/workspace/raid/data/jgusak/ssds.pytorch/mobilenet_v2_ssd_lite_voc_73.2.pth'
 PHASE: ['test']

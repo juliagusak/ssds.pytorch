@@ -45,10 +45,11 @@ DATASET:
   TRAIN_SETS: [['2007', 'trainval'], ['2012', 'trainval']]
   TEST_SETS:  [['2007', 'test']]
 
-EXP_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc'
-LOG_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc'
+EXP_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc_cp3_compressed'
+LOG_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc_cp3_compressed'
 
-RESUME_CHECKPOINT: '/workspace/raid/data/jgusak/ssds.pytorch/resnet18_imagenet_ckpt.pth'
+RESUME_CHECKPOINT: '/workspace/raid/data/jgusak/ssds.pytorch/resnet18_imagenet_cp3_compressed_ckpt.pth'
+RESUME_MODEL: '/workspace/raid/data/jgusak/for_yulia/resnet18_cp3_compressed_loss1.260267.pth'
 
 
 PHASE: ['train']

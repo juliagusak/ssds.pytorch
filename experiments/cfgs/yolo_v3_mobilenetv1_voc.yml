@@ -13,9 +13,10 @@ MODEL:
 TRAIN:
   MAX_EPOCHS: 100
   CHECKPOINTS_EPOCHS: 1
-  BATCH_SIZE: 32
-  TRAINABLE_SCOPE: 'base,extras,loc,conf'
-  RESUME_SCOPE: 'base,extras,loc,conf'
+  BATCH_SIZE: 64
+  TRAINABLE_SCOPE: 'extras,loc,conf'
+  #RESUME_SCOPE: 'base,extras,loc,conf'
+  RESUME_SCOPE: 'base'
   OPTIMIZER:
     OPTIMIZER: sgd
     LEARNING_RATE: 0.001
@@ -26,7 +27,7 @@ TRAIN:
     WARM_UP_EPOCHS: 50
 
 TEST:
-  BATCH_SIZE: 64
+  BATCH_SIZE: 32
   TEST_SCOPE: [90, 100]
 
 MATCHER:
@@ -41,12 +42,15 @@ POST_PROCESS:
 
 DATASET:
   DATASET: 'voc'
-  DATASET_DIR: './data/VOCdevkit'
-  TRAIN_SETS: [['2007', 'trainval'], ['2012', 'trainval']]
-  TEST_SETS:  [['2007', 'test']]
+  DATASET_DIR: './data/pascal/VOCdevkit'
+  #TRAIN_SETS: [['2007', 'trainval'], ['2012', 'trainval']]
+  #TEST_SETS:  [['2007', 'test']]
+  TRAIN_SETS: [['2012', 'train']]
+  TEST_SETS:  [['2012', 'val']]
   PROB: 0.6
+  NUM_WORKERS: 8
 
 EXP_DIR: './experiments/models/yolo_v3_mobilenetv1_voc'
 LOG_DIR: './experiments/models/yolo_v3_mobilenetv1_voc'
 RESUME_CHECKPOINT: './weights/yolo/mobilenet_v1_yolo_v3_voc_78.2.pth'
-PHASE: ['test']
+PHASE: ['train', 'eval']

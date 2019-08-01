@@ -49,6 +49,9 @@ class COCODetection(data.Dataset):
             'test-dev2015' : 'test2015',
         }
 
+        if not os.path.exists(self.cache_path):
+            os.mkdir(self.cache_path)
+
         # self.data_name = list()
         # self.data_len = list()
         for (year, image_set) in image_sets:

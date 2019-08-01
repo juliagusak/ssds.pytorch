@@ -36,7 +36,6 @@ class PriorBox(object):
 
     def forward(self):
         mean = []
-        # l = 0
         for k, f in enumerate(self.feature_maps):
             for i, j in product(range(f[0]), range(f[1])):
                 cx = j * self.steps[k][1] + self.offset[k][1]

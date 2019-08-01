@@ -161,15 +161,13 @@ __C.POST_PROCESS.VARIANCE = __C.MATCHER.VARIANCE
 # Dataset options
 # ---------------------------------------------------------------------------- #
 # Root directory of project
-# __C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
-
+__C.ROOT_DIR = osp.abspath(osp.join(osp.dirname(__file__), '..', '..'))
 
 __C.DATASET = AttrDict()
 # name of the dataset
 __C.DATASET.DATASET = 'voc'
 # path of the dataset
-# __C.DATASET.DATASET_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
-__C.DATASET.DATASET_DIR = "/workspace/raid/data/datasets/voc/"
+__C.DATASET.DATASET_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'data'))
 # train set scope
 __C.DATASET.TRAIN_SETS = [('2007', 'trainval'), ('2012', 'trainval')]
 # test set scope
@@ -192,12 +190,12 @@ __C.DATASET.NUM_WORKERS = 8
 # Export options
 # ---------------------------------------------------------------------------- #
 # Place outputs model under an experiments directory
-# __C.EXP_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'experiments/models/'))
-__C.EXP_DIR = "/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/"
+__C.EXP_DIR = osp.abspath(osp.join(__C.ROOT_DIR, 'experiments/models/'))
 __C.LOG_DIR = __C.EXP_DIR
 __C.RESUME_CHECKPOINT = ''
 __C.CHECKPOINTS_PREFIX = '{}_{}_{}'.format(__C.MODEL.SSDS, __C.MODEL.NETS, __C.DATASET.DATASET)
 __C.PHASE = ['train', 'eval', 'test']
+__C.RESUME_MODEL = ''
 
 # def _merge_a_into_b(a, b):
 #   """Merge config dictionary a into config dictionary b, clobbering the
@@ -273,7 +271,9 @@ def cfg_from_file(filename):
     """Load a config file and merge it into the default options."""
     import yaml
     with open(filename, 'r') as f:
-        yaml_cfg = AttrDict(yaml.load(f))
+#         yaml_cfg = AttrDict(yaml.load(f, Loader=yaml.FullLoader))
+        yaml_cfg = AttrDict(yaml.load(f, Loader=yaml.SafeLoader))
+
 
     _merge_a_into_b(yaml_cfg, __C)
     update_cfg()

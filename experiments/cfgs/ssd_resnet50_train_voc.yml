@@ -48,7 +48,7 @@ EXP_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet
 LOG_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet50_voc'
 
 # RESUME_CHECKPOINT: ''
-RESUME_CHECKPOINT: "/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet_50_voc_epoch_20.pth"
+RESUME_CHECKPOINT: "/workspace/raid/data/jgusak/ssds.pytorch/resnet50_ssd_voc_79.7.pth"
 
 
-PHASE: ['train']
+PHASE: ['test']

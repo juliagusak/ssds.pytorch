@@ -12,9 +12,10 @@ MODEL:
 TRAIN:
   MAX_EPOCHS: 100
   CHECKPOINTS_EPOCHS: 1
-  BATCH_SIZE: 28
-  TRAINABLE_SCOPE: 'base,norm,extras,transforms,pyramids,loc,conf'
-  RESUME_SCOPE: 'base,norm,extras,transforms,pyramids,loc,conf'
+  BATCH_SIZE: 96
+  #TRAINABLE_SCOPE: 'base,norm,extras,transforms,pyramids,loc,conf'
+  TRAINABLE_SCOPE: 'norm,extras,transforms,pyramids,loc,conf'
+  RESUME_SCOPE: 'base'
   OPTIMIZER:
     OPTIMIZER: sgd
     LEARNING_RATE: 0.001
@@ -25,7 +26,7 @@ TRAIN:
     WARM_UP_EPOCHS: 10
 
 TEST:
-  BATCH_SIZE: 64
+  BATCH_SIZE: 32
   TEST_SCOPE: [90, 100]
 
 MATCHER:
@@ -44,8 +45,11 @@ DATASET:
   TRAIN_SETS: [['2017', 'train']]
   TEST_SETS:  [['2017', 'val']]
   PROB: 0.6
+  NUM_WORKERS: 8
 
 EXP_DIR: './experiments/models/fssd_resnet50_coco'
 LOG_DIR: './experiments/models/fssd_resnet50_coco'
 RESUME_CHECKPOINT: './weights/fssd/resnet50_fssd_coco_27.2.pth'
-PHASE: ['test']
+PHASE: ['train', 'eval']
+#PHASE: ['test']
+

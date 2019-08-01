@@ -113,7 +113,7 @@ def resnet(conv_defs, depth_multiplier=1.0, min_depth=8):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
         ]
     in_channels = 64
-    for j,conv_def in enumerate(conv_defs):
+    for conv_def in conv_defs:
         if conv_def.stride != 1 or in_channels != depth(conv_def.depth * conv_def.t):
             _downsample = nn.Sequential(
                 nn.Conv2d(in_channels, depth(conv_def.depth * conv_def.t),
@@ -123,10 +123,9 @@ def resnet(conv_defs, depth_multiplier=1.0, min_depth=8):
         if isinstance(conv_def, BasicBlock):
             for n in range(conv_def.num):
                 try:
-                    (stride, downsample) = (conv_def.stride, _downsample) if (n == 0) else (1, None)
+                    (stride, downsample) = (conv_def.stride, _downsample) if n == 0 else (1, None)
                 except:
                     (stride, downsample) = (1, None)
-                
                 layers += [_basicblock(in_channels, depth(conv_def.depth), stride, conv_def.t, downsample)]
                 in_channels = depth(conv_def.depth * conv_def.t)
         elif isinstance(conv_def, Bottleneck):
