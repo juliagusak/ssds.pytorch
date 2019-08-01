@@ -121,39 +121,41 @@ class Solver(object):
         if 'module.' in list(checkpoint.items())[0][0]:
             pretrained_dict = {'.'.join(k.split('.')[1:]): v for k, v in list(checkpoint.items())}
             checkpoint = pretrained_dict
-        
-        if 'resnet18_imagenet' in self.checkpoint:
-            change_dict = {
-                    'bn1.running_mean':'base.1.running_mean',
-                    'bn1.running_var':'base.1.running_var',
-                    'bn1.bias':'base.1.bias',
-                    'bn1.weight':'base.1.weight',
-                    }
-            if ('cp3_compressed' in self.checkpoint):
-                l = copy.deepcopy(torch.load(cfg.RESUME_MODEL, map_location='cpu').module.conv1)
-                if self.use_gpu:
-                    l = l.cuda()
-                self.model.base[0] = l
-            else:
-                change_dict.update({'conv1.weight':'base.0.weight'})
+            
+        previous = self.find_previous()
+        if not previous:
+            if "resnet18_imagenet" in self.checkpoint:
+                change_dict = {
+                        'bn1.running_mean':'base.1.running_mean',
+                        'bn1.running_var':'base.1.running_var',
+                        'bn1.bias':'base.1.bias',
+                        'bn1.weight':'base.1.weight',
+                        }
+                if ('cp3_compressed' in self.checkpoint):
+                    l = copy.deepcopy(torch.load(cfg.RESUME_MODEL, map_location='cpu').module.conv1)
+                    if self.use_gpu:
+                        l = l.cuda()
+                    self.model.base[0] = l
+                else:
+                    change_dict.update({'conv1.weight':'base.0.weight'})
 
-            for k, v in list(checkpoint.items()):
-                for _k, _v in list(change_dict.items()):
-                    if _k == k:
-                        new_key = k.replace(_k, _v)
-                        checkpoint[new_key] = checkpoint.pop(k)
-                        
-            change_dict = {'layer1.{:d}.'.format(i):'base.{:d}.'.format(i+4) \
-                           for i in range(20)}
-            change_dict.update({'layer2.{:d}.'.format(i):'base.{:d}.'.format(i+6) \
-                                for i in range(20)})
-            change_dict.update({'layer3.{:d}.'.format(i):'base.{:d}.'.format(i+8) \
-                                for i in range(30)})
-            for k, v in list(checkpoint.items()):
-                for _k, _v in list(change_dict.items()):
-                    if _k in k:
-                        new_key = k.replace(_k, _v)
-                        checkpoint[new_key] = checkpoint.pop(k)
+                for k, v in list(checkpoint.items()):
+                    for _k, _v in list(change_dict.items()):
+                        if _k == k:
+                            new_key = k.replace(_k, _v)
+                            checkpoint[new_key] = checkpoint.pop(k)
+
+                change_dict = {'layer1.{:d}.'.format(i):'base.{:d}.'.format(i+4) \
+                               for i in range(20)}
+                change_dict.update({'layer2.{:d}.'.format(i):'base.{:d}.'.format(i+6) \
+                                    for i in range(20)})
+                change_dict.update({'layer3.{:d}.'.format(i):'base.{:d}.'.format(i+8) \
+                                    for i in range(30)})
+                for k, v in list(checkpoint.items()):
+                    for _k, _v in list(change_dict.items()):
+                        if _k in k:
+                            new_key = k.replace(_k, _v)
+                            checkpoint[new_key] = checkpoint.pop(k)
                         
 
         resume_scope = self.cfg.TRAIN.RESUME_SCOPE

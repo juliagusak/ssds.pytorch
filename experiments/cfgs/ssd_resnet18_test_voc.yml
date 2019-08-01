@@ -10,7 +10,7 @@ MODEL:
   ASPECT_RATIOS: [[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2], [1, 2]]
 
 TRAIN:
-  MAX_EPOCHS: 400
+  MAX_EPOCHS: 200
   CHECKPOINTS_EPOCHS: 5
   BATCH_SIZE: 32
   TRAINABLE_SCOPE: 'base,norm,extras,loc,conf'
@@ -48,7 +48,7 @@ DATASET:
 EXP_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc'
 LOG_DIR: '/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc'
 
-RESUME_CHECKPOINT: '/workspace/raid/data/jgusak/ssds.pytorch/resnet18_imagenet_ckpt.pth'
+RESUME_CHECKPOINT: "/workspace/raid/data/jgusak/ssds.pytorch/experiments/models/ssd_resnet18_voc/ssd_resnet_18_voc_epoch_175.pth"
 
 
-PHASE: ['train']
+PHASE: ['test']
